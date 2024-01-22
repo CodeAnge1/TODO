@@ -2,7 +2,6 @@ import dearpygui.dearpygui as dpg
 import dearpygui_extend as dpge
 
 from constants import *
-# from custom_modules.custom_date_picker import DatePicker
 from main import connector, cursor
 
 renaming_desk = 0
@@ -21,12 +20,6 @@ def on_drop(source, target):
 # TODO
 def task_on_drop(source, target):
     print(source, target)
-    print(dpg.get_item_info(238))
-    # data_1 = cursor.execute("""SELECT task_id, desk_pos FROM Tasks WHERE desk_internal_id=?""", (source,)).fetchone()
-    # data_2 = cursor.execute("""SELECT task_id, desk_pos FROM Tasks WHERE desk_internal_id=?""", (target,)).fetchone()
-    # cursor.execute("""UPDATE Desks SET desk_pos=? WHERE desk_id=?""", (data_1[1], data_2[0]))
-    # cursor.execute("""UPDATE Desks SET desk_pos=? WHERE desk_id=?""", (data_2[1], data_1[0]))
-    # connector.commit()
 
 
 def delete_desk(sender, app_data, user_data):
@@ -96,10 +89,11 @@ def task_name_callback(sender, app_data, user_data):
 
 def create_new_task(sender, app_data, user_data):
     global naming_task
+
     desk_id = user_data
     task_internal_id = dpg.add_group(horizontal=True, parent='task_box')
 
-    req = cursor.execute("""SELECT task_pos FROM Tasks""").fetchall()
+    req = cursor.execute("""SELECT task_pos FROM Tasks WHERE desk_id=?""", (desk_id,)).fetchall()
     if len(req) == 0:
         task_pos = 1
     else:
@@ -137,6 +131,7 @@ def rename_task(sender, app_data, user_data):
 
 def delete_task(sender, app_data, user_data):
     cursor.execute("""DELETE FROM Tasks WHERE task_id=?""", (user_data[1],))
+    connector.commit()
     start_work_with_desk(None, None, user_data[0])
 
 
@@ -164,12 +159,11 @@ def start_work_with_desk(sender, app_data, user_data):
             else:
                 task_color = TITLE_COLOR_COMPLETED
             dpge.add_movable_group(title=f"{k + 1}. {task[4]}", title_color=task_color, drop_callback=task_on_drop)
-            # TODO drop_callback=task_on_drop
             if task[5] == 0:
-                dpg.add_checkbox(indent=155, user_data=task, default_value=False, callback=change_task_status)
+                dpg.add_checkbox(indent=157, user_data=task, default_value=False, callback=change_task_status)
             else:
-                dpg.add_checkbox(indent=155, user_data=task, default_value=True, callback=change_task_status)
-            dpg.add_button(label='Удалить', indent=186, user_data=task, callback=delete_task)
+                dpg.add_checkbox(indent=157, user_data=task, default_value=True, callback=change_task_status)
+            dpg.add_button(label='Удалить', indent=188, user_data=task, callback=delete_task)
         dpg.add_separator(parent='task_box')
 
 
