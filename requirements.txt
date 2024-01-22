@@ -1,0 +1,4 @@
+dearpygui~=1.9.1
+pillow~=10.2.0
+python-dateutil~=2.8.2
+numpy~=1.26.2
