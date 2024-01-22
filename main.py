@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-import DearPyGui_ImageController as dpg_img
+# import DearPyGui_ImageController as dpg_img
 from UI import *
 
 connector = sqlite3.connect(fr'{os.getcwd()}\app_data\db\user.db', check_same_thread=False)
@@ -26,7 +26,7 @@ def set_styles():
 
 def setup():
     dpg.create_context()
-    dpg_img.set_texture_registry(dpg.add_texture_registry())
+    # dpg_img.set_texture_registry(dpg.add_texture_registry())
     dpg.setup_dearpygui()
     dpg.create_viewport(title='TODO', max_width=320, max_height=500, resizable=False)
     dpg.show_viewport()

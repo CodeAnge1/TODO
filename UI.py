@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 import dearpygui_extend as dpge
 
 from constants import *
-from custom_modules.custom_date_picker import DatePicker
+# from custom_modules.custom_date_picker import DatePicker
 from main import connector, cursor
 
 renaming_desk = 0
