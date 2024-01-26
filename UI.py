@@ -1,12 +1,10 @@
-import pathlib
-
 import dearpygui.dearpygui as dpg
 import dearpygui_extend as dpge
 from PIL import Image
 
 import DearPyGui_ImageController as dpg_img
 from constants import *
-from main import connector, cursor
+from main import connector, cursor, path_to_trash_img
 
 renaming_desk = 0
 naming_task = 0
@@ -58,27 +56,6 @@ def delete_desk(sender, app_data, user_data):
 
 
 def new_board(sender, app_data, user_data):
-    # TODO  img btns
-    # name_and_delete = dpg.add_group(parent=task_group, horizontal=True)
-    # dpg.add_text(default_value=task_list[4], parent=name_and_delete, color=TITLE_COLOR)
-    # cwd_path = pathlib.Path.cwd()
-    # path_to_trash_img = pathlib.Path(cwd_path, "app_data", "icons", "trash_button.png")
-    # path_to_edit_img = pathlib.Path(cwd_path, "app_data", "icons", "edit-button.png")
-    # img1 = Image.open(path_to_edit_img)
-    # tag1 = dpg_img.tools.image_to_dpg_texture(img1)
-    # img2 = Image.open(path_to_trash_img)
-    # tag2 = dpg_img.tools.image_to_dpg_texture(img2)
-    # img_btn_1 = dpg.add_image_button(tag1, indent=158, width=20, height=20, background_color=[35, 35, 35],
-    #                                  parent=name_and_delete,
-    #                                  callback=task_name_callback, user_data=task_list[1])
-    # img_btn_2 = dpg.add_image_button(tag2, indent=191, width=17, height=20, background_color=[35, 35, 35],
-    #                                  parent=name_and_delete,
-    #                                  callback=delete_list, user_data=task_list[1])
-    # with dpg.theme() as theme_id:
-    #     with dpg.theme_component(0):
-    #         dpg.add_theme_color(dpg.mvThemeCol_Button, (37, 37, 37, 255))
-    # dpg.bind_item_theme(img_btn_2, theme_id)
-    # dpg.bind_item_theme(img_btn_1, theme_id)
     req = cursor.execute("""SELECT * FROM Desks ORDER BY desk_id DESC LIMIT 1;""").fetchall()
     if len(req) == 0:
         desk_count = 1
@@ -170,7 +147,10 @@ def create_new_list():
 
 def delete_list(sender, app_data, user_data):
     desk_id = cursor.execute("""SELECT desk_id FROM TaskLists WHERE list_id=?""", (user_data,)).fetchone()[0]
+    task_ids = cursor.execute("""SELECT task_id FROM Tasks WHERE list_id=?""", (user_data,)).fetchall()
     cursor.execute("""DELETE FROM TaskLists WHERE list_id=?""", (user_data,))
+    for task_id in task_ids:
+        cursor.execute("""DELETE FROM Tasks WHERE task_id=?""", (task_id[0],))
     connector.commit()
     start_work_with_desk(None, None, desk_id)
 
@@ -233,13 +213,13 @@ def add_description(user_data):
 def rename_task(sender, app_data, user_data):
     global new_task_name, naming_task
 
-    # TODO fix bug with long task name
     new_task_name = dpg.get_value(user_data)
     new_task_name = str(new_task_name)
     dpg.configure_item('name_task_modal_id', show=False)
     dpg.set_value(user_data, '')
-    cursor.execute("""UPDATE Tasks SET task_name=? WHERE task_id=?""", (new_task_name, naming_task))
-    connector.commit()
+    if new_task_name:
+        cursor.execute("""UPDATE Tasks SET task_name=? WHERE task_id=?""", (new_task_name, naming_task))
+        connector.commit()
     desk_id = cursor.execute("""SELECT desk_id FROM TaskLists WHERE 
     list_id=(SELECT list_id FROM Tasks WHERE task_id=?)""", (naming_task,)).fetchone()[0]
     start_work_with_desk(None, None, desk_id)
@@ -261,7 +241,6 @@ def rename_list_on_enter(sender, app_data, user_data):
 def rename_list(sender, app_data, user_data):
     global new_list_name, naming_list
 
-    # TODO fix bug with long task name
     new_list_name = dpg.get_value(user_data)
     new_list_name = str(new_list_name)
     dpg.configure_item('name_list_modal_id', show=False)
@@ -334,8 +313,6 @@ def start_work_with_desk(sender, app_data, user_data):
         inp_text = dpg.add_input_text(default_value=task_list[4], parent=name_and_delete, width=185,
                                       on_enter=True, callback=rename_list_on_enter)
         dpg.set_item_user_data(inp_text, [task_list[1], inp_text])
-        cwd_path = pathlib.Path.cwd()
-        path_to_trash_img = pathlib.Path(cwd_path, "app_data", "icons", "trash_button.png")
 
         img2 = Image.open(path_to_trash_img)
         tag2 = dpg_img.tools.image_to_dpg_texture(img2)
@@ -375,8 +352,6 @@ def start_work_with_desk(sender, app_data, user_data):
                     dpg.add_checkbox(indent=WINDOW_WIDTH / 4 - 25, user_data=task, default_value=True,
                                      callback=change_task_status)
 
-                cwd_path = pathlib.Path.cwd()
-                path_to_trash_img = pathlib.Path(cwd_path, "app_data", "icons", "trash_button.png")
                 img2 = Image.open(path_to_trash_img)
                 tag2 = dpg_img.tools.image_to_dpg_texture(img2)
                 img_btn_2 = dpg.add_image_button(tag2, indent=WINDOW_WIDTH / 4 + 5, width=17, height=20,
